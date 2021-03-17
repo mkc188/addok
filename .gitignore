@@ -27,3 +27,8 @@ local*.py
 *.db
 *.tar.bz2
 .pytest_cache/
+
+addok/bin/
+addok/include/
+addok/lib/
+*.c
