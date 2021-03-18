@@ -212,6 +212,6 @@ def prepare_housenumbers(doc):
         for number, data in housenumbers.items():
             # Housenumber may have multiple tokens (eg.: "dix huit").
             token = ''.join(list(preprocess(number)))
-            data['raw'] = number
+            data['raw'] = number.replace('Hao', '')
             doc['housenumbers'][token] = data
     return doc
