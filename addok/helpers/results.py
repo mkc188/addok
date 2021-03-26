@@ -16,7 +16,10 @@ def make_labels(helper, result):
             label = label + ' ' + city
         housenumber = getattr(result, 'housenumber', None)
         if housenumber:
-            label = '{} {}'.format(housenumber, label)
+            if result.lang == 'zh':
+                label = '{}{}號'.format(label, housenumber)
+            else:
+                label = '{} {}'.format(housenumber, label)
         # Replace default label with our computed one, but keep the other raw
         # aliases, and let plugins add more of them if needed.
         result.labels[0] = label
