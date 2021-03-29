@@ -3,16 +3,20 @@ import logging
 import logging.handlers
 from pathlib import Path
 import time
+import geohash
 
 import falcon
 
-from addok.config import config
 from addok.core import reverse, search
 from addok.helpers.text import EntityTooLarge
+from addok.config import config
+from hashids import Hashids
 
 notfound_logger = None
 query_logger = None
 slow_query_logger = None
+
+hashids = Hashids()
 
 
 def get_logger(name):
@@ -167,10 +171,21 @@ class Reverse(View):
 
     def on_get(self, req, resp, **kwargs):
         lon, lat = self.parse_lon_lat(req)
-        if lon is None or lat is None:
+        placeID = req.get_param('place_id')
+        if (lon is None or lat is None) and not placeID:
             raise falcon.HTTPBadRequest('Invalid args', 'Invalid args')
+        placeIDArray = []
+        if placeID:
+            placeIDArray = placeID.split('_')
+            if len(placeIDArray) == 2:
+                lat, lon = geohash.decode(placeIDArray[1][:config.GEOHASH_PRECISION])
         limit = req.get_param_as_int('limit') or 1
         filters = self.match_filters(req)
+        if len(placeIDArray) == 2 and placeIDArray[1] and len(placeIDArray[1]) > config.GEOHASH_PRECISION:
+            filters['type'] = placeIDArray[1][config.GEOHASH_PRECISION:].upper()
+            filters['id'] = str(hashids.decode(placeIDArray[0])[0])
+            if filters['type'] == 'H':
+                filters['type'] = 'housenumber'
         results = reverse(lat=lat, lon=lon, limit=limit, **filters)
         self.render(req, resp, results, filters=filters, limit=limit)
 
