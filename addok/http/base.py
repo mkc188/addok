@@ -179,11 +179,11 @@ class Reverse(View):
             placeIDArray = placeID.split('_')
             print(placeIDArray)
             if len(placeIDArray) > 1:
-                lat, lon = geohash.decode(placeIDArray[-1][:config.GEOHASH_PRECISION])
+                lat, lon = geohash.decode(placeIDArray[-1][:12])
         limit = req.get_param_as_int('limit') or 1
         filters = self.match_filters(req)
-        if len(placeIDArray) > 1 and placeIDArray[-1] and len(placeIDArray[-1]) > config.GEOHASH_PRECISION:
-            filters['type'] = placeIDArray[-1][config.GEOHASH_PRECISION:].upper()
+        if len(placeIDArray) > 1 and placeIDArray[-1] and len(placeIDArray[-1]) > 12:
+            filters['type'] = placeIDArray[-1][12:].upper()
             try:
                 filters['id'] = str(hashids.decode(placeIDArray[0])[0])
             except:
