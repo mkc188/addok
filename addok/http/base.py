@@ -177,13 +177,17 @@ class Reverse(View):
         placeIDArray = []
         if placeID:
             placeIDArray = placeID.split('_')
-            if len(placeIDArray) == 2:
-                lat, lon = geohash.decode(placeIDArray[1][:config.GEOHASH_PRECISION])
+            print(placeIDArray)
+            if len(placeIDArray) > 1:
+                lat, lon = geohash.decode(placeIDArray[-1][:config.GEOHASH_PRECISION])
         limit = req.get_param_as_int('limit') or 1
         filters = self.match_filters(req)
-        if len(placeIDArray) == 2 and placeIDArray[1] and len(placeIDArray[1]) > config.GEOHASH_PRECISION:
-            filters['type'] = placeIDArray[1][config.GEOHASH_PRECISION:].upper()
-            filters['id'] = str(hashids.decode(placeIDArray[0])[0])
+        if len(placeIDArray) > 1 and placeIDArray[-1] and len(placeIDArray[-1]) > config.GEOHASH_PRECISION:
+            filters['type'] = placeIDArray[-1][config.GEOHASH_PRECISION:].upper()
+            try:
+                filters['id'] = str(hashids.decode(placeIDArray[0])[0])
+            except:
+                filters['id'] = '_'.join(placeIDArray[:-1])
             if filters['type'] == 'H':
                 filters['type'] = 'housenumber'
         results = reverse(lat=lat, lon=lon, limit=limit, **filters)

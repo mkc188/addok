@@ -490,9 +490,9 @@ def geojson(result):
 
     try:
         resultType = 'h' if result.type == 'housenumber' else result.type.lower()
-        properties['place_id'] = hashids.encode(int(properties['id'])) + '_' + geohash.encode(float(result.lat), float(result.lon), config.GEOHASH_PRECISION) + result.type.lower()
+        properties['place_id'] = hashids.encode(int(properties['id'])) + '_' + geohash.encode(float(result.lat), float(result.lon), config.GEOHASH_PRECISION) + resultType
     except:
-        pass
+        properties['place_id'] = properties['id'] + '_' + geohash.encode(float(result.lat), float(result.lon), config.GEOHASH_PRECISION) + resultType
 
     try:
         if result.lang == 'zh':
