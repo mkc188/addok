@@ -495,6 +495,11 @@ def geojson(result):
         properties['place_id'] = properties['id'] + '_' + geohash.encode(float(result.lat), float(result.lon), 12) + resultType
 
     try:
+        properties['type'] = 'H' if result.type == 'housenumber' else result.type
+    except:
+        pass
+
+    try:
         if result.lang == 'zh':
             properties['area'] = cacodeDict[result.cacode]['carea']
             properties['district'] = cacodeDict[result.cacode]['cdist']
