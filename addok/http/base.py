@@ -138,6 +138,7 @@ class Search(View):
 
     def on_get(self, req, resp, **kwargs):
         query = req.get_param('q')
+        language = req.get_param('language') or 'zh'
         if not query:
             raise falcon.HTTPBadRequest('Missing query', 'Missing query')
         limit = req.get_param_as_int('limit') or 5  # use config
@@ -163,7 +164,29 @@ class Search(View):
         log_query(query, results)
         if config.SLOW_QUERIES and timer > config.SLOW_QUERIES:
             log_slow_query(query, results, timer)
-        self.render(req, resp, results, query=query, filters=filters,
+        print(results)
+        filtered_results = {}
+
+        def sortbyindex(item):
+            idx = item.name.lower().find(query.lower())
+            if idx == -1:
+                idx = 100
+            return idx
+
+        def sortbylang(item):
+            if item.lang == language:
+                return 0
+            else:
+                return 1
+
+        results.sort(key=lambda x: (sortbylang(x), sortbyindex(x)))
+        for r in results:
+            if not filtered_results.get(r.name.lower()) and r.type[0] != 'R':
+                filtered_results[r.name.lower()] = r
+            elif not filtered_results.get(r.id) and r.type[0] == 'R':
+                filtered_results[r.id] = r
+        
+        self.render(req, resp, list(filtered_results.values()), query=query, filters=filters,
                     center=center, limit=limit)
 
 
@@ -180,7 +203,7 @@ class Reverse(View):
             print(placeIDArray)
             if len(placeIDArray) > 1:
                 lat, lon = geohash.decode(placeIDArray[-1][:12])
-        limit = req.get_param_as_int('limit') or 1
+        limit = req.get_param_as_int('limit') or 5
         filters = self.match_filters(req)
         if len(placeIDArray) > 1 and placeIDArray[-1] and len(placeIDArray[-1]) > 12:
             filters['type'] = placeIDArray[-1][12:].upper()
@@ -191,7 +214,30 @@ class Reverse(View):
             if filters['type'] == 'H':
                 filters['type'] = 'housenumber'
         results = reverse(lat=lat, lon=lon, limit=limit, **filters)
-        self.render(req, resp, results, filters=filters, limit=limit)
+        tieredResults = [[],[],[],[],[],[]]
+        for result in results:
+            print(result, result.distance, result.type)
+
+            if result.type[0] == 'R' and not tieredResults[4]:
+                tieredResults[5].append(result)
+            elif result.distance < 10:
+                if result.type in ['B', 'S', 'SS']:
+                    tieredResults[0].append(result)
+                else:
+                    tieredResults[1].append(result)
+            elif result.type != 'ST':
+                if result.type in ['B', 'S', 'SS']:
+                    tieredResults[2].append(result)
+                else:
+                    tieredResults[3].append(result)
+            else:
+                tieredResults[4].append(result)
+
+        finalResults = []
+        for tr in tieredResults:
+            finalResults += tr
+
+        self.render(req, resp, finalResults[:1], filters=filters, limit=limit)
 
 
 def register_http_endpoint(api):
