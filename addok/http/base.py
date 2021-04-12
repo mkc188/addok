@@ -164,7 +164,6 @@ class Search(View):
         log_query(query, results)
         if config.SLOW_QUERIES and timer > config.SLOW_QUERIES:
             log_slow_query(query, results, timer)
-        print(results)
         filtered_results = {}
 
         def sortbyindex(item):
@@ -200,7 +199,6 @@ class Reverse(View):
         placeIDArray = []
         if placeID:
             placeIDArray = placeID.split('_')
-            print(placeIDArray)
             if len(placeIDArray) > 1:
                 lat, lon = geohash.decode(placeIDArray[-1][:12])
         limit = req.get_param_as_int('limit') or 5
@@ -216,8 +214,6 @@ class Reverse(View):
         results = reverse(lat=lat, lon=lon, limit=limit, **filters)
         tieredResults = [[],[],[],[],[],[]]
         for result in results:
-            print(result, result.distance, result.type)
-
             if result.type[0] == 'R' and not tieredResults[4]:
                 tieredResults[5].append(result)
             elif result.distance < 10:
