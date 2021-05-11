@@ -141,7 +141,7 @@ class Search(View):
         language = req.get_param('language') or 'zh'
         if not query:
             raise falcon.HTTPBadRequest('Missing query', 'Missing query')
-        limit = req.get_param_as_int('limit') or 5  # use config
+        limit = req.get_param_as_int('limit') or 8  # use config
         autocomplete = req.get_param_as_bool('autocomplete')
         if autocomplete is None:
             # Default is True.
@@ -179,7 +179,7 @@ class Search(View):
                 return 1
 
         results.sort(key=lambda x: (sortbylang(x), sortbyindex(x)))
-        for r in results:
+        for r in (results if req.get_param_as_int('limit') else results[:5]):
             if not filtered_results.get(r.name.lower()) and r.type[0] != 'R':
                 filtered_results[r.name.lower()] = r
             elif not filtered_results.get(r.id) and r.type[0] == 'R':
